@@ -1,0 +1,88 @@
+.container {
+  display: flex;
+  height: 100%;
+}
+
+.sideNavigatorContainer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
+  background-color: #293742;
+  color: #e1e8ed;
+  min-width: 230px;
+  overflow-y: scroll;
+}
+
+.mainContainer {
+  display: flex;
+
+  flex-grow: 1;
+  background-color: #e1e8ed;
+  position: relative;
+  overflow: hidden;
+}
+
+.userName {
+  align-self: center;
+}
+
+.platformLable {
+  cursor: pointer;
+}
+
+.tree {
+  width: 100%;
+}
+
+.addPortfolio {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.windowContainerMax {
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+.windowContainer {
+  position: absolute !important;
+}
+
+.windowContainer:hover {
+  z-index: 2;
+}
+
+.windowCard {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.windowHeader {
+  padding: 5px;
+  cursor: move;
+  background-color: #293742;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &_title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  &_controls {
+  }
+}
+
+.windowBody {
+  padding: 5px;
+  width: 100%;
+  height: 100%;
+}

@@ -1,5 +1,5 @@
 import { Button, FormGroup, H5, InputGroup, Intent, Menu, MenuItem, Tree } from '@blueprintjs/core'
-import { Classes, ContextMenu2, Popover2 } from '@blueprintjs/popover2'
+import { Classes, Popover2 } from '@blueprintjs/popover2'
 import cloneDeep from 'lodash/cloneDeep'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRecoilCallback, useRecoilState, useSetRecoilState } from 'recoil'
@@ -26,11 +26,17 @@ export const Portfolios = () => {
   const [serviceContextMenu, setServiceContextMenu] = useState(null)
   const [portfolioContextMenu, setPortfolioContextMenu] = useState(null)
   const [platformContextMenu, setPlatformContextMenu] = useState(null)
+  const [bpmnContextMenu, setBpmnContextMenu] = useState(null)
+  const [platformPopOver, setPlatformPopOver] = useState(null)
+  const [PlatformPopOverOpenId, setPlatformPopOverOpenId] = useState(null)
+  const [newElmentToPlatformName, setNewElmentToPlatformName] = useState(null)
+  const [elmentToPlatformNameError, setElmentToPlatformNameError] = useState(null)
 
   useOnClickOutsideContextMenu(() => {
     setPortfolioContextMenu(null)
     setPlatformContextMenu(null)
     setServiceContextMenu(null)
+    setBpmnContextMenu(null)
   })
 
   const onNodeContextMenu = useCallback((node, _, e) => {
@@ -45,6 +51,9 @@ export const Portfolios = () => {
         break
       case 'protfolio':
         setPortfolioContextMenu(node.id)
+        break
+      case 'bpmn':
+        setBpmnContextMenu(node.id)
         break
     }
   }, [])
@@ -78,6 +87,8 @@ export const Portfolios = () => {
     },
     [updatePlatform, currentPlatform, addNewWindow]
   )
+
+  const onNewBpmnFile = useCallback(() => {}, [])
 
   const addElmentToPortfolio = useCallback(
     async event => {
@@ -186,7 +197,7 @@ export const Portfolios = () => {
 
   const ServiceChainPopOverContent = useMemo(
     () => (
-      <div key='text'>
+      <div key='text3'>
         <H5>{portfolioPopOver?.type}</H5>
         <form onSubmit={addElmentToPortfolio}>
           <FormGroup
@@ -240,6 +251,7 @@ export const Portfolios = () => {
     setServiceContextMenu(null)
     setPortfolioContextMenu(null)
     setPlatformContextMenu(null)
+    setBpmnContextMenu(null)
   }, [])
 
   const onServiceChainMenuClick = useCallback(
@@ -257,13 +269,47 @@ export const Portfolios = () => {
       setServiceContextMenu(null)
       setPortfolioContextMenu(null)
       setPlatformContextMenu(null)
+      setBpmnContextMenu(null)
     },
     []
   )
 
+  const onPlatformMenuClick = useCallback(
+    ({
+      platform,
+      platformId,
+      portfolioId,
+      portfolioIdx,
+      serviceChainIdx,
+      platformIdx,
+      newFile,
+    }) => {
+      setNewElmentToPlatformName(null)
+      setElmentToPlatformNameError(null)
+      setPlatformPopOver({
+        platform,
+        platformId,
+        portfolioId,
+        portfolioIdx,
+        serviceChainIdx,
+        platformIdx,
+      })
+      if (newFile) setPlatformPopOverOpenId(platformId)
+      setServiceContextMenu(null)
+      setPortfolioContextMenu(null)
+      setPlatformContextMenu(null)
+      setBpmnContextMenu(null)
+    },
+    []
+  )
+
+  const addEmptyBpmn = useCallback(event => {
+    event.preventDefault()
+  }, [])
+
   const PlatformPopOverContent = useMemo(
     () => (
-      <div key='text'>
+      <div key='text2'>
         <H5>New Platform</H5>
         <form onSubmit={addPlatform}>
           <FormGroup
@@ -271,11 +317,11 @@ export const Portfolios = () => {
             labelInfo='(required)'
             intent={newPlatformNameError ? Intent.DANGER : Intent.NONE}
             helperText={newPlatformNameError}
-            labelFor='newPlatformName'
+            labelFor='newPlatformName1'
           >
             <InputGroup
               required
-              id='newPlatformName'
+              id='newPlatformName1'
               onChange={event => {
                 setNewPlatformNameError(false)
                 setNewPlatformName(event.target.value)
@@ -307,6 +353,55 @@ export const Portfolios = () => {
       </div>
     ),
     [addPlatform, isAddServiceLoading, newPlatformNameError]
+  )
+
+  const BpmnPopOverContent = useMemo(
+    () => (
+      <div key='text1'>
+        <H5>New BPMN</H5>
+        <form onSubmit={addEmptyBpmn}>
+          <FormGroup
+            label='Name'
+            labelInfo='(required)'
+            intent={elmentToPlatformNameError ? Intent.DANGER : Intent.NONE}
+            helperText={elmentToPlatformNameError}
+            labelFor='newPlatformName'
+          >
+            <InputGroup
+              required
+              id='newPlatformName'
+              onChange={event => {
+                setElmentToPlatformNameError(false)
+                setNewElmentToPlatformName(event.target.value)
+              }}
+            />
+          </FormGroup>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
+            <Button
+              className={Classes.POPOVER2_DISMISS}
+              disabled={isAddServiceLoading}
+              style={{ marginRight: 10 }}
+              onClick={() => {
+                setElmentToPlatformNameError(false)
+                setNewElmentToPlatformName(null)
+                setPlatformPopOverOpenId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              loading={isAddServiceLoading}
+              intent={Intent.SUCCESS}
+              className={Classes.POPOVER2_DISMISS}
+            >
+              Add
+            </Button>
+          </div>
+        </form>
+      </div>
+    ),
+    [addEmptyBpmn, elmentToPlatformNameError, isAddServiceLoading]
   )
 
   useEffect(() => {
@@ -441,30 +536,116 @@ export const Portfolios = () => {
             ),
             nodeData: { type: 'serviceChain', data: serviceChain },
             childNodes:
-              serviceChain?.platforms?.map(platform => ({
+              serviceChain?.platforms?.map((platform, platformIdx) => ({
                 id: platform.id,
-                icon: 'document',
+                hasCaret: platform?.bpmnFiles?.length > 0,
+                icon: 'application',
+                isExpanded:
+                  prevNodes
+                    ?.find(node => portfolio.id === node.id)
+                    ?.childNodes.find(child => child.id === serviceChain.id)
+                    ?.childNodes?.find(child => child.id === platform.id)?.isExpanded ?? false,
                 label: (
                   <Popover2
-                    content={
-                      <Menu>
-                        <MenuItem
-                          textClassName='target_menu'
-                          icon='upload'
-                          text='Import Bpmn File'
-                          onClick={() => {
-                            setCurrentPlatform(platform)
-                            bpmnFileRef.current.click()
-                          }}
-                        />
-                      </Menu>
-                    }
-                    isOpen={platform.id === platformContextMenu}
+                    isOpen={platform.id === PlatformPopOverOpenId}
+                    popoverClassName={Classes.POPOVER2_CONTENT_SIZING}
+                    content={BpmnPopOverContent}
                   >
-                    {platform.name}
+                    <Popover2
+                      content={
+                        <Menu>
+                          <MenuItem
+                            key={Math.random() * 5000}
+                            textClassName='target_menu'
+                            icon='upload'
+                            text='Import Bpmn File'
+                            onClick={() => {
+                              onPlatformMenuClick({
+                                platform,
+                                platformId: platform.id,
+                                portfolioId: portfolio.id,
+                                portfolioIdx,
+                                serviceChainIdx,
+                                platformIdx,
+                              })
+                              bpmnFileRef.current.click()
+                            }}
+                          />
+                          <MenuItem
+                            key={Math.random() * 5000}
+                            textClassName='target_menu'
+                            icon='plus'
+                            text='Create New BPMN'
+                            onClick={() => {
+                              onPlatformMenuClick({
+                                platform,
+                                platformId: platform?.id,
+                                portfolioId: portfolio?.id,
+                                portfolioIdx,
+                                serviceChainIdx,
+                                platformIdx,
+                                newFile: true,
+                              })
+                            }}
+                          />
+                        </Menu>
+                      }
+                      isOpen={platform?.id === platformContextMenu}
+                    >
+                      {platform.name}
+                    </Popover2>
                   </Popover2>
                 ),
                 nodeData: { type: 'platform', data: platform },
+                childNodes:
+                  platform?.bpmnFiles?.map(bpmnFile => ({
+                    id: bpmnFile?.id ?? Math.random() * 5000,
+                    icon: 'document',
+                    nodeData: { type: 'bpmn', data: bpmnFile },
+                    label: (
+                      <Popover2
+                        isOpen={bpmnFile?.id === bpmnContextMenu}
+                        content={
+                          <Menu>
+                            <MenuItem
+                              textClassName='target_menu'
+                              icon='upload'
+                              text='commit'
+                              onClick={() => {
+                                console.log('commit')
+                              }}
+                            />
+                            <MenuItem
+                              textClassName='target_menu'
+                              icon='upload'
+                              text='change'
+                              onClick={() => {
+                                console.log('change')
+                              }}
+                            />
+                            <MenuItem
+                              textClassName='target_menu'
+                              icon='upload'
+                              text='close'
+                              onClick={() => {
+                                console.log('close')
+                              }}
+                            />
+                            <MenuItem
+                              textClassName='target_menu'
+                              icon='upload'
+                              text='archive'
+                              onClick={() => {
+                                console.log('archive')
+                              }}
+                            />
+                          </Menu>
+                        }
+                      >
+                        {bpmnFile.fileName}
+                      </Popover2>
+                    ),
+                  })) ?? [],
               })) ?? [],
           })) ?? [],
       }))
@@ -482,11 +663,15 @@ export const Portfolios = () => {
     serviceContextMenu,
     platformContextMenu,
     addNewWindow,
+    BpmnPopOverContent,
+    onPlatformMenuClick,
+    PlatformPopOverOpenId,
+    bpmnContextMenu,
   ])
 
   const onNodeClick = useCallback(
     (node, nodePath) => {
-      if (node.nodeData.type !== 'platform') return
+      if (node.nodeData.type !== 'bpmn') return
 
       setNodes(setNodesAttribute(nodes, 'isSelected', false))
       setNodes(setNodeAttribute(nodes, nodePath, 'isSelected', true))
@@ -562,6 +747,7 @@ const useOnClickOutsideContextMenu = handler => {
       if (
         event.target.classList.contains('target_menu') ||
         event.target.getAttribute('data-icon') === 'plus' ||
+        event.target.getAttribute('data-icon') === 'update' ||
         event.target.tagName === 'path' ||
         event.target.classList.contains('bp3-menu-item')
       )

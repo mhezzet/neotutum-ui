@@ -18,11 +18,11 @@
 
 .mainContainer {
   display: flex;
-
+  flex-wrap: wrap;
   flex-grow: 1;
   background-color: #e1e8ed;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .userName {
@@ -46,26 +46,24 @@
 .windowContainerMax {
   width: 100% !important;
   height: 100% !important;
-  transform: none !important;
+  position: absolute !important;
+  margin: 0px !important;
+  z-index: 1001;
 }
 
 .windowContainer {
-  position: absolute !important;
-}
-
-.windowContainer:hover {
-  z-index: 2;
+  margin: 15px;
 }
 
 .windowCard {
   padding: 0 !important;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .windowHeader {
   padding: 5px;
-  cursor: move;
   background-color: #293742;
   display: flex;
   align-items: center;

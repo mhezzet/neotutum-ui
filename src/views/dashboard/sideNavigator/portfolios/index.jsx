@@ -59,13 +59,24 @@ export const Portfolios = () => {
 
   const bpmnFileRef = useRef(null)
 
+  const addNewWindow = useCallback(
+    ({ data, type }) => {
+      setWindows(prevWindows =>
+        prevWindows.find(window => window.data.id === data.id)
+          ? prevWindows
+          : [{ type, data, id: generateID() }, ...prevWindows]
+      )
+    },
+    [setWindows]
+  )
+
   const onImportBpmnFile = useCallback(
     async event => {
       const bpmnFile = await event.target.files[0].text()
       updatePlatform({ file: bpmnFile, platform: currentPlatform })
-      setWindows([{ type: 'platform', platform: currentPlatform, id: generateID() }])
+      addNewWindow({ type: 'platform', data: currentPlatform })
     },
-    [currentPlatform, updatePlatform, setWindows]
+    [updatePlatform, currentPlatform, addNewWindow]
   )
 
   const addElmentToPortfolio = useCallback(
@@ -387,7 +398,7 @@ export const Portfolios = () => {
             </Popover2>
           </Popover2>
         ),
-        nodeData: { type: 'protfolio' },
+        nodeData: { type: 'protfolio', data: portfolio },
         childNodes:
           portfolio?.serviceChains?.map((serviceChain, serviceChainIdx) => ({
             id: serviceChain.id,
@@ -428,7 +439,7 @@ export const Portfolios = () => {
                 </Popover2>
               </Popover2>
             ),
-            nodeData: { type: 'serviceChain' },
+            nodeData: { type: 'serviceChain', data: serviceChain },
             childNodes:
               serviceChain?.platforms?.map(platform => ({
                 id: platform.id,
@@ -450,14 +461,10 @@ export const Portfolios = () => {
                     }
                     isOpen={platform.id === platformContextMenu}
                   >
-                    <div
-                      onClick={() => setWindows([{ type: 'platform', platform, id: generateID() }])}
-                    >
-                      {platform.name}
-                    </div>
+                    {platform.name}
                   </Popover2>
                 ),
-                nodeData: { type: 'platform' },
+                nodeData: { type: 'platform', data: platform },
               })) ?? [],
           })) ?? [],
       }))
@@ -474,6 +481,7 @@ export const Portfolios = () => {
     portfolioContextMenu,
     serviceContextMenu,
     platformContextMenu,
+    addNewWindow,
   ])
 
   const onNodeClick = useCallback(
@@ -482,8 +490,9 @@ export const Portfolios = () => {
 
       setNodes(setNodesAttribute(nodes, 'isSelected', false))
       setNodes(setNodeAttribute(nodes, nodePath, 'isSelected', true))
+      addNewWindow({ type: 'platform', data: node.nodeData.data })
     },
-    [nodes]
+    [addNewWindow, nodes]
   )
 
   const onNodeCollapse = useCallback(

@@ -8,7 +8,6 @@ export const SideNavigator = () => {
   return (
     <div className={`${styles.sideNavigatorContainer} bp3-dark`}>
       <H3 className={styles.userName}>user name</H3>
-
       <div className={styles.tree}>
         <div className={styles.addPortfolio}>
           <H4>Portfolios</H4>

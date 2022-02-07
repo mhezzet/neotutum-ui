@@ -13,9 +13,9 @@ export const Main = () => {
 
   return (
     <div className={styles.mainContainer}>
-      {windows.map(window => (
+      {/* {windows.map(window => (
         <Window key={window.id} window={window} onClose={() => windowCloseHandler(window.id)} />
-      ))}
+      ))} */}
     </div>
   )
 }

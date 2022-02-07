@@ -3,7 +3,8 @@ import { Classes, Popover2 } from '@blueprintjs/popover2'
 import cloneDeep from 'lodash/cloneDeep'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRecoilCallback, useRecoilState, useSetRecoilState } from 'recoil'
-import { addNewPlatform, addServiceChain } from '../../../../services'
+import { EMPTY_BPMN } from '../../../../constants'
+import { addNewBpmn, addNewPlatform, addServiceChain } from '../../../../services'
 import { platformState, protfoliosState } from '../../../../store/portfolios'
 import { windowsState } from '../../../../store/windows'
 import { generateID } from '../../../../utils/generateID'
@@ -21,7 +22,6 @@ export const Portfolios = () => {
   const [newPlatformNameError, setNewPlatformNameError] = useState(null)
   const [serviceChainPopOver, setServiceChainPopOver] = useState(null)
   const [serviceChainPopOverOpenId, setServiceChainPopOverOpenId] = useState(null)
-  const [currentPlatform, setCurrentPlatform] = useState(null)
   const setWindows = useSetRecoilState(windowsState)
   const [serviceContextMenu, setServiceContextMenu] = useState(null)
   const [portfolioContextMenu, setPortfolioContextMenu] = useState(null)
@@ -60,8 +60,8 @@ export const Portfolios = () => {
 
   const updatePlatform = useRecoilCallback(
     ({ set }) =>
-      ({ platform, file }) => {
-        set(platformState(platform.id), { xml: file })
+      ({ bpmnId, file }) => {
+        set(platformState(bpmnId), { xml: file })
       },
     []
   )
@@ -82,13 +82,35 @@ export const Portfolios = () => {
   const onImportBpmnFile = useCallback(
     async event => {
       const bpmnFile = await event.target.files[0].text()
-      updatePlatform({ file: bpmnFile, platform: currentPlatform })
-      addNewWindow({ type: 'platform', data: currentPlatform })
-    },
-    [updatePlatform, currentPlatform, addNewWindow]
-  )
+      const fileName = event.target.files[0].name
 
-  const onNewBpmnFile = useCallback(() => {}, [])
+      const { data } = await addNewBpmn({
+        file: bpmnFile,
+        creatorId: 1,
+        fileName,
+        platformId: platformPopOver.platformId,
+      })
+
+      setPortfolios(prevPortfolios => ({
+        ...prevPortfolios,
+        data: prevPortfolios.data.map(portfolio => ({
+          ...portfolio,
+          serviceChains:
+            portfolio?.serviceChains.map(serviceChain => ({
+              ...serviceChain,
+              platforms: serviceChain?.platforms.map(platform => ({
+                ...platform,
+                bpmnFiles: platform ? [data.data, ...platform.bpmnFiles] : [data.data],
+              })),
+            })) ?? [],
+        })),
+      }))
+
+      updatePlatform({ file: bpmnFile, bpmnId: data.data.id })
+      addNewWindow({ type: 'bpmn', data: data.data })
+    },
+    [addNewWindow, platformPopOver, setPortfolios, updatePlatform]
+  )
 
   const addElmentToPortfolio = useCallback(
     async event => {
@@ -303,9 +325,52 @@ export const Portfolios = () => {
     []
   )
 
-  const addEmptyBpmn = useCallback(event => {
-    event.preventDefault()
-  }, [])
+  const addEmptyBpmn = useCallback(
+    async event => {
+      event.preventDefault()
+
+      if (!newElmentToPlatformName) {
+        return setElmentToPlatformNameError('Name is required')
+      }
+
+      setIsAddServiceLoading(true)
+      setElmentToPlatformNameError(null)
+
+      try {
+        const { data } = await addNewBpmn({
+          file: EMPTY_BPMN,
+          creatorId: 1,
+          fileName: newElmentToPlatformName + '.bpmn',
+          platformId: platformPopOver.platformId,
+        })
+
+        setPortfolios(prevPortfolios => ({
+          ...prevPortfolios,
+          data: prevPortfolios.data.map(portfolio => ({
+            ...portfolio,
+            serviceChains:
+              portfolio?.serviceChains.map(serviceChain => ({
+                ...serviceChain,
+                platforms: serviceChain?.platforms.map(platform => ({
+                  ...platform,
+                  bpmnFiles: platform ? [data.data, ...platform.bpmnFiles] : [data.data],
+                })),
+              })) ?? [],
+          })),
+        }))
+
+        setPlatformPopOverOpenId(null)
+
+        updatePlatform({ file: EMPTY_BPMN, bpmnId: data.data.id })
+        addNewWindow({ type: 'bpmn', data: data.data })
+      } catch (error) {
+        setElmentToPlatformNameError(error.message)
+        showDangerToaster(error.message)
+        setIsAddServiceLoading(false)
+      }
+    },
+    [addNewWindow, newElmentToPlatformName, platformPopOver, setPortfolios, updatePlatform]
+  )
 
   const PlatformPopOverContent = useMemo(
     () => (
@@ -608,34 +673,42 @@ export const Portfolios = () => {
                         content={
                           <Menu>
                             <MenuItem
+                              key={Math.random() * 5000}
                               textClassName='target_menu'
                               icon='upload'
                               text='commit'
                               onClick={() => {
+                                setBpmnContextMenu(null)
                                 console.log('commit')
                               }}
                             />
                             <MenuItem
+                              key={Math.random() * 5000}
                               textClassName='target_menu'
                               icon='upload'
                               text='change'
                               onClick={() => {
+                                setBpmnContextMenu(null)
                                 console.log('change')
                               }}
                             />
                             <MenuItem
+                              key={Math.random() * 5000}
                               textClassName='target_menu'
                               icon='upload'
                               text='close'
                               onClick={() => {
+                                setBpmnContextMenu(null)
                                 console.log('close')
                               }}
                             />
                             <MenuItem
+                              key={Math.random() * 5000}
                               textClassName='target_menu'
                               icon='upload'
                               text='archive'
                               onClick={() => {
+                                setBpmnContextMenu(null)
                                 console.log('archive')
                               }}
                             />
@@ -673,11 +746,11 @@ export const Portfolios = () => {
     (node, nodePath) => {
       if (node.nodeData.type !== 'bpmn') return
 
-      setNodes(setNodesAttribute(nodes, 'isSelected', false))
-      setNodes(setNodeAttribute(nodes, nodePath, 'isSelected', true))
-      addNewWindow({ type: 'platform', data: node.nodeData.data })
+      // setNodes(setNodesAttribute(nodes, 'isSelected', false))
+      // setNodes(setNodeAttribute(nodes, nodePath, 'isSelected', true))
+      addNewWindow({ type: 'bpmn', data: node.nodeData.data })
     },
-    [addNewWindow, nodes]
+    [addNewWindow]
   )
 
   const onNodeCollapse = useCallback(

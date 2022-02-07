@@ -4,13 +4,12 @@ import { useState } from 'react'
 import { ResizableBox } from 'react-resizable'
 import { useRecoilState } from 'recoil'
 import { Bpmn } from '../../../../components/bpmn'
-import { EMPTY_BPMN } from '../../../../constants'
 import { platformState } from '../../../../store/portfolios'
 import styles from '../../styles.module.scss'
 
 export const Window = ({ onClose, window }) => {
   const [isMaximize, setIsMaximize] = useState(false)
-  const [platform, setPlatform] = useRecoilState(platformState(window.data.id))
+  const [bpmn, setbpmn] = useRecoilState(platformState(window.data.id))
 
   return (
     <ResizableBox
@@ -27,7 +26,7 @@ export const Window = ({ onClose, window }) => {
         <div className={`handle bp3-dark ${styles.windowHeader}`}>
           <div className={styles.windowHeader_title}>
             <Icon icon='document' />
-            <div className='bp3-ui-text'>{window.data.name}</div>
+            <div className='bp3-ui-text'>{window.data.fileName}</div>
           </div>
           <ButtonGroup>
             <Tooltip2 content={<span>{isMaximize ? 'minimize' : 'maximize'}</span>}>
@@ -45,9 +44,9 @@ export const Window = ({ onClose, window }) => {
         </div>
         <div className={styles.windowBody}>
           <Bpmn
-            xml={platform.xml ?? EMPTY_BPMN}
+            xml={bpmn.xml ?? window.data.fileData}
             onChange={data => {
-              setPlatform({ xml: data })
+              setbpmn({ xml: data })
               //  const json = converter.xml2json(data, { compact: true, spaces: 2 })
             }}
           />

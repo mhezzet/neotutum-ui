@@ -23,6 +23,31 @@ export const Portfolios = () => {
   const [serviceChainPopOverOpenId, setServiceChainPopOverOpenId] = useState(null)
   const [currentPlatform, setCurrentPlatform] = useState(null)
   const setWindows = useSetRecoilState(windowsState)
+  const [serviceContextMenu, setServiceContextMenu] = useState(null)
+  const [portfolioContextMenu, setPortfolioContextMenu] = useState(null)
+  const [platformContextMenu, setPlatformContextMenu] = useState(null)
+
+  useOnClickOutsideContextMenu(() => {
+    setPortfolioContextMenu(null)
+    setPlatformContextMenu(null)
+    setServiceContextMenu(null)
+  })
+
+  const onNodeContextMenu = useCallback((node, _, e) => {
+    e.preventDefault()
+    // eslint-disable-next-line default-case
+    switch (node.nodeData.type) {
+      case 'serviceChain':
+        setServiceContextMenu(node.id)
+        break
+      case 'platform':
+        setPlatformContextMenu(node.id)
+        break
+      case 'protfolio':
+        setPortfolioContextMenu(node.id)
+        break
+    }
+  }, [])
 
   const updatePlatform = useRecoilCallback(
     ({ set }) =>
@@ -201,6 +226,9 @@ export const Portfolios = () => {
     setElmentToPortfolioNameError(null)
     setPortfolioPopOver({ type, portfolio, portfolioIdx })
     setPortfolioPopOverOpenId(portfolioId)
+    setServiceContextMenu(null)
+    setPortfolioContextMenu(null)
+    setPlatformContextMenu(null)
   }, [])
 
   const onServiceChainMenuClick = useCallback(
@@ -215,6 +243,9 @@ export const Portfolios = () => {
         serviceChainIdx,
       })
       setServiceChainPopOverOpenId(serviceChainId)
+      setServiceContextMenu(null)
+      setPortfolioContextMenu(null)
+      setPlatformContextMenu(null)
     },
     []
   )
@@ -280,10 +311,11 @@ export const Portfolios = () => {
             content={ServiceChainPopOverContent}
             isOpen={portfolio.id === portfolioPopOverOpenId}
           >
-            <ContextMenu2
+            <Popover2
               content={
                 <Menu>
                   <MenuItem
+                    textClassName='target_menu'
                     icon='plus'
                     text='New Template'
                     onClick={() =>
@@ -296,6 +328,7 @@ export const Portfolios = () => {
                     }
                   />
                   <MenuItem
+                    textClassName='target_menu'
                     icon='plus'
                     text='New Risk Assessment'
                     onClick={() =>
@@ -308,6 +341,7 @@ export const Portfolios = () => {
                     }
                   />
                   <MenuItem
+                    textClassName='target_menu'
                     icon='plus'
                     text='New Model'
                     onClick={() =>
@@ -320,6 +354,7 @@ export const Portfolios = () => {
                     }
                   />
                   <MenuItem
+                    textClassName='target_menu'
                     icon='plus'
                     text='New Code'
                     onClick={() =>
@@ -332,6 +367,7 @@ export const Portfolios = () => {
                     }
                   />
                   <MenuItem
+                    textClassName='target_menu'
                     icon='plus'
                     text='New Service Chain'
                     onClick={() =>
@@ -345,9 +381,10 @@ export const Portfolios = () => {
                   />
                 </Menu>
               }
+              isOpen={portfolio.id === portfolioContextMenu}
             >
               {portfolio.name}
-            </ContextMenu2>
+            </Popover2>
           </Popover2>
         ),
         nodeData: { type: 'protfolio' },
@@ -366,10 +403,11 @@ export const Portfolios = () => {
                 content={PlatformPopOverContent}
                 isOpen={serviceChain.id === serviceChainPopOverOpenId}
               >
-                <ContextMenu2
+                <Popover2
                   content={
                     <Menu>
                       <MenuItem
+                        textClassName='target_menu'
                         icon='plus'
                         text='New Platform'
                         onClick={() =>
@@ -384,9 +422,10 @@ export const Portfolios = () => {
                       />
                     </Menu>
                   }
+                  isOpen={serviceChain.id === serviceContextMenu}
                 >
                   {serviceChain.name}
-                </ContextMenu2>
+                </Popover2>
               </Popover2>
             ),
             nodeData: { type: 'serviceChain' },
@@ -395,10 +434,11 @@ export const Portfolios = () => {
                 id: platform.id,
                 icon: 'document',
                 label: (
-                  <ContextMenu2
+                  <Popover2
                     content={
                       <Menu>
                         <MenuItem
+                          textClassName='target_menu'
                           icon='upload'
                           text='Import Bpmn File'
                           onClick={() => {
@@ -408,13 +448,14 @@ export const Portfolios = () => {
                         />
                       </Menu>
                     }
+                    isOpen={platform.id === platformContextMenu}
                   >
                     <div
                       onClick={() => setWindows([{ type: 'platform', platform, id: generateID() }])}
                     >
                       {platform.name}
                     </div>
-                  </ContextMenu2>
+                  </Popover2>
                 ),
                 nodeData: { type: 'platform' },
               })) ?? [],
@@ -430,6 +471,9 @@ export const Portfolios = () => {
     onServiceChainMenuClick,
     PlatformPopOverContent,
     setWindows,
+    portfolioContextMenu,
+    serviceContextMenu,
+    platformContextMenu,
   ])
 
   const onNodeClick = useCallback(
@@ -459,6 +503,7 @@ export const Portfolios = () => {
         onNodeClick={onNodeClick}
         onNodeCollapse={onNodeCollapse}
         onNodeExpand={onNodeExpand}
+        onNodeContextMenu={onNodeContextMenu}
       />
       <input
         style={{ display: 'none' }}
@@ -499,4 +544,27 @@ const forEachNode = (nodes, callback) => {
     callback(node)
     forEachNode(node.childNodes, callback)
   }
+}
+
+//work around for context menu
+const useOnClickOutsideContextMenu = handler => {
+  useEffect(() => {
+    const listener = event => {
+      if (
+        event.target.classList.contains('target_menu') ||
+        event.target.getAttribute('data-icon') === 'plus' ||
+        event.target.tagName === 'path' ||
+        event.target.classList.contains('bp3-menu-item')
+      )
+        return
+
+      handler(event)
+    }
+    document.addEventListener('mousedown', listener)
+    document.addEventListener('touchstart', listener)
+    return () => {
+      document.removeEventListener('mousedown', listener)
+      document.removeEventListener('touchstart', listener)
+    }
+  }, [handler])
 }

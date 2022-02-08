@@ -114,7 +114,6 @@ export const Window = ({ onClose, window }) => {
             <Bpmn
               xml={bpmn.xml ?? window.data.fileData}
               onChange={data => {
-                console.log('change')
                 setbpmn({ xml: data })
                 //  const json = converter.xml2json(data, { compact: true, spaces: 2 })
               }}

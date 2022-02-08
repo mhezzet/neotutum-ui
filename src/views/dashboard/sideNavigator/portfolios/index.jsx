@@ -93,17 +93,31 @@ export const Portfolios = () => {
 
       setPortfolios(prevPortfolios => ({
         ...prevPortfolios,
-        data: prevPortfolios.data.map(portfolio => ({
-          ...portfolio,
-          serviceChains:
-            portfolio?.serviceChains.map(serviceChain => ({
-              ...serviceChain,
-              platforms: serviceChain?.platforms.map(platform => ({
-                ...platform,
-                bpmnFiles: platform ? [data.data, ...platform.bpmnFiles] : [data.data],
-              })),
-            })) ?? [],
-        })),
+        data: prevPortfolios.data.map(portfolio =>
+          portfolio.id === platformPopOver.portfolioId
+            ? {
+                ...portfolio,
+                serviceChains:
+                  portfolio?.serviceChains.map(serviceChain =>
+                    platformPopOver.serviceChainId === serviceChain.id
+                      ? {
+                          ...serviceChain,
+                          platforms: serviceChain?.platforms.map(platform =>
+                            platform.id === platformPopOver.platformId
+                              ? {
+                                  ...platform,
+                                  bpmnFiles: platform
+                                    ? [data.data, ...platform.bpmnFiles]
+                                    : [data.data],
+                                }
+                              : platform
+                          ),
+                        }
+                      : serviceChain
+                  ) ?? [],
+              }
+            : portfolio
+        ),
       }))
 
       updatePlatform({ file: bpmnFile, bpmnId: data.data.id })
@@ -183,16 +197,24 @@ export const Portfolios = () => {
 
         setPortfolios(prevPortfolios => ({
           ...prevPortfolios,
-          data: prevPortfolios.data.map(portfolio => ({
-            ...portfolio,
-            serviceChains:
-              portfolio?.serviceChains.map(serviceChain => ({
-                ...serviceChain,
-                platforms: serviceChain?.platforms
-                  ? [data.data, ...serviceChain.platforms]
-                  : [data.data],
-              })) ?? [],
-          })),
+          data: prevPortfolios.data.map(portfolio =>
+            portfolio.id === serviceChainPopOver.portfolioId
+              ? {
+                  ...portfolio,
+                  serviceChains:
+                    portfolio?.serviceChains.map(serviceChain =>
+                      serviceChainPopOver.serviceChainId === serviceChain.id
+                        ? {
+                            ...serviceChain,
+                            platforms: serviceChain?.platforms
+                              ? [data.data, ...serviceChain.platforms]
+                              : [data.data],
+                          }
+                        : serviceChain
+                    ) ?? [],
+                }
+              : portfolio
+          ),
         }))
 
         setIsAddServiceLoading(false)
@@ -303,6 +325,7 @@ export const Portfolios = () => {
       portfolioId,
       portfolioIdx,
       serviceChainIdx,
+      serviceChainId,
       platformIdx,
       newFile,
     }) => {
@@ -314,6 +337,7 @@ export const Portfolios = () => {
         portfolioId,
         portfolioIdx,
         serviceChainIdx,
+        serviceChainId,
         platformIdx,
       })
       if (newFile) setPlatformPopOverOpenId(platformId)
@@ -346,17 +370,31 @@ export const Portfolios = () => {
 
         setPortfolios(prevPortfolios => ({
           ...prevPortfolios,
-          data: prevPortfolios.data.map(portfolio => ({
-            ...portfolio,
-            serviceChains:
-              portfolio?.serviceChains.map(serviceChain => ({
-                ...serviceChain,
-                platforms: serviceChain?.platforms.map(platform => ({
-                  ...platform,
-                  bpmnFiles: platform ? [data.data, ...platform.bpmnFiles] : [data.data],
-                })),
-              })) ?? [],
-          })),
+          data: prevPortfolios.data.map(portfolio =>
+            portfolio.id === platformPopOver.portfolioId
+              ? {
+                  ...portfolio,
+                  serviceChains:
+                    portfolio?.serviceChains.map(serviceChain =>
+                      platformPopOver.serviceChainId === serviceChain.id
+                        ? {
+                            ...serviceChain,
+                            platforms: serviceChain?.platforms.map(platform =>
+                              platform.id === platformPopOver.platformId
+                                ? {
+                                    ...platform,
+                                    bpmnFiles: platform
+                                      ? [data.data, ...platform.bpmnFiles]
+                                      : [data.data],
+                                  }
+                                : platform
+                            ),
+                          }
+                        : serviceChain
+                    ) ?? [],
+                }
+              : portfolio
+          ),
         }))
 
         setPlatformPopOverOpenId(null)
@@ -629,6 +667,7 @@ export const Portfolios = () => {
                                 platform,
                                 platformId: platform.id,
                                 portfolioId: portfolio.id,
+                                serviceChainId: serviceChain.id,
                                 portfolioIdx,
                                 serviceChainIdx,
                                 platformIdx,
@@ -648,6 +687,7 @@ export const Portfolios = () => {
                                 portfolioId: portfolio?.id,
                                 portfolioIdx,
                                 serviceChainIdx,
+                                serviceChainId: serviceChain.id,
                                 platformIdx,
                                 newFile: true,
                               })

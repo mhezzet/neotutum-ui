@@ -20,21 +20,18 @@ export const addNewBpmn = ({
   bpmnEntities = [],
   bpmnLanes = [],
 }) => {
-  const form = xmlFormatter({
-    fileName,
-    platformId,
-    fileData: file,
-    creatorId,
-    bpmnAssociations,
-    bpmnSequenceFlows,
-    bpmnEntities,
-    bpmnLanes,
-  })
-
   return serviceProvider('/bpmnFile', {
     method: 'post',
-    data: form,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    data: {
+      fileName,
+      platformId,
+      fileData: file,
+      creatorId,
+      bpmnAssociations: bpmnAssociations,
+      bpmnSequenceFlows: bpmnSequenceFlows,
+      bpmnEntities: bpmnEntities,
+      bpmnLanes: bpmnLanes,
+    },
   })
 }
 

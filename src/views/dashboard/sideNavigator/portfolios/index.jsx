@@ -105,12 +105,14 @@ export const Portfolios = () => {
       const bpmnFile = await event.target.files[0].text()
       const fileName = event.target.files[0].name
 
+      console.log('bpmnFile', bpmnFile)
+
       const { data } = await addNewBpmn({
         file: bpmnFile,
         creatorId: 1,
         fileName,
         platformId: platformPopOver.platformId,
-        // ...xmlParser(bpmnFile), TODO ERROR PARSING
+        ...xmlParser(bpmnFile),
       })
 
       setPortfolios(prevPortfolios => ({

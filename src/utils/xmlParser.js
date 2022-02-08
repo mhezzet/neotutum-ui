@@ -10,12 +10,13 @@ export const arrayFilter = (jsonArray, filter) => {
 export const xmlParser = content => {
   const BPMNJson = new XMLParser().parseFromString(content)
   const processArray = arrayFilter(BPMNJson.children, 'process')
-  const fullObject = {
+  let fullObject = {
     bpmnAssociations: [],
     bpmnEntities: [],
     bpmnSequenceFlows: [],
     bpmnLanes: [],
   }
+
   processArray.forEach(process => {
     fullObject.bpmnSequenceFlows.push(arrayFilter(process.children, 'sequenceflow'))
     fullObject.bpmnLanes.push(arrayFilter(process.children, 'lanes'))
@@ -25,6 +26,16 @@ export const xmlParser = content => {
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'dataobject'))
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'textannotation'))
   })
+
+  // for (const key in fullObject) {
+  //   fullObject[key] = fullObject[key].flat()
+  // }
+
+  for (const [key, value] of Object.entries(fullObject)) {
+    fullObject[key] = value.length > 0 ? value.flat() : []
+  }
+
+  // fullObject = Object.entries(fullObject).map(([key, value]) => ({ [key]: value.flat() }))
 
   return fullObject
 }

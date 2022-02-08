@@ -80,7 +80,7 @@ export const Bpmn = memo(({ xml = '', onChange }) => {
           cursor: 'pointer',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 100,
+          zIndex: 19,
           right: 20,
           bottom: '10%',
         }}

@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useRecoilState } from 'recoil'
+import { Async } from '../../../components/asyncHOC'
 import { windowsState } from '../../../store/windows'
 import styles from '../styles.module.scss'
 import { Window } from './window'
@@ -13,9 +14,11 @@ export const Main = () => {
 
   return (
     <div className={styles.mainContainer}>
-      {windows.map(window => (
-        <Window key={window.id} window={window} onClose={() => windowCloseHandler(window.id)} />
-      ))}
+      <Async>
+        {windows.map(window => (
+          <Window key={window.id} window={window} onClose={() => windowCloseHandler(window.id)} />
+        ))}
+      </Async>
     </div>
   )
 }

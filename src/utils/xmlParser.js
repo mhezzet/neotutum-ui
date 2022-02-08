@@ -27,15 +27,9 @@ export const xmlParser = content => {
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'textannotation'))
   })
 
-  // for (const key in fullObject) {
-  //   fullObject[key] = fullObject[key].flat()
-  // }
-
   for (const [key, value] of Object.entries(fullObject)) {
     fullObject[key] = value.length > 0 ? value.flat() : []
   }
-
-  // fullObject = Object.entries(fullObject).map(([key, value]) => ({ [key]: value.flat() }))
 
   return fullObject
 }

@@ -3,7 +3,10 @@ import { useRecoilState } from 'recoil'
 import { Async } from '../../../components/asyncHOC'
 import { windowsState } from '../../../store/windows'
 import styles from '../styles.module.scss'
-import { Window } from './window'
+import { AddWindowsButton } from './addWindowsButton'
+import { DataWindow } from './windows/dataWindow'
+import { GraphWindow } from './windows/graphWindow'
+
 export const Main = () => {
   const [windows, setWindows] = useRecoilState(windowsState)
 
@@ -15,8 +18,24 @@ export const Main = () => {
   return (
     <div className={styles.mainContainer}>
       <Async>
+        <AddWindowsButton />
         {windows.map(window => (
-          <Window key={window.id} window={window} onClose={() => windowCloseHandler(window.id)} />
+          <>
+            {window.type === 'bpmn' && (
+              <GraphWindow
+                key={window.id}
+                window={window}
+                onClose={() => windowCloseHandler(window.id)}
+              />
+            )}
+            {window.type === 'data' && (
+              <DataWindow
+                key={window.id}
+                window={window}
+                onClose={() => windowCloseHandler(window.id)}
+              />
+            )}
+          </>
         ))}
       </Async>
     </div>

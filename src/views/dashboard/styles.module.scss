@@ -80,6 +80,13 @@
   }
 }
 
+.addWindowsButton {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 18;
+}
+
 .windowBody {
   padding: 5px;
   width: 100%;

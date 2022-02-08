@@ -972,6 +972,7 @@ export const Portfolios = () => {
         type='file'
         accept='.bpmn'
         multiple={false}
+        onClick={event => (event.target.value = null)}
         onChange={onImportBpmnFile}
       />
     </div>

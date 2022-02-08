@@ -9,6 +9,7 @@ import {
   getBpmnSequenceFlows,
 } from '../../../../services'
 import { windowsState } from '../../../../store/windows'
+import { generateID } from '../../../../utils/generateID'
 import styles from '../../styles.module.scss'
 
 export const AddWindowsButton = () => {
@@ -19,7 +20,11 @@ export const AddWindowsButton = () => {
     setIsLoading(true)
     const { data } = await getBpmnAssociations()
     setWindowsState(prevWindows => [
-      { type: 'data', data: { type: 'BPMN Associations', associations: data.data } },
+      {
+        id: generateID(),
+        type: 'data',
+        data: { type: 'BPMN Associations', associations: data.data },
+      },
       ...prevWindows,
     ])
 
@@ -30,7 +35,7 @@ export const AddWindowsButton = () => {
     setIsLoading(true)
     const { data } = await getBpmnEntities()
     setWindowsState(prevWindows => [
-      { type: 'data', data: { type: 'BPMN Entities', entities: data.data } },
+      { id: generateID(), type: 'data', data: { type: 'BPMN Entities', entities: data.data } },
       ...prevWindows,
     ])
 
@@ -41,7 +46,11 @@ export const AddWindowsButton = () => {
     setIsLoading(true)
     const { data } = await getBpmnSequenceFlows()
     setWindowsState(prevWindows => [
-      { type: 'data', data: { type: 'BPMN SequenceFlows', sequenceFlows: data.data } },
+      {
+        id: generateID(),
+        type: 'data',
+        data: { type: 'BPMN SequenceFlows', sequenceFlows: data.data },
+      },
       ...prevWindows,
     ])
     setIsLoading(false)
@@ -51,7 +60,7 @@ export const AddWindowsButton = () => {
     setIsLoading(true)
     const { data } = await getBpmnLanes()
     setWindowsState(prevWindows => [
-      { type: 'data', data: { type: 'Lanes', lanes: data.data } },
+      { id: generateID(), type: 'data', data: { type: 'Lanes', lanes: data.data } },
       ...prevWindows,
     ])
     setIsLoading(false)

@@ -7,6 +7,9 @@ import {
   Intent,
   Menu,
   MenuItem,
+  ProgressBar,
+  Spinner,
+  Switch,
 } from '@blueprintjs/core'
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2'
 import { useCallback, useState } from 'react'
@@ -19,8 +22,11 @@ import {
   getBpmnEntities,
   getBpmnLanes,
   getBpmnSequenceFlows,
+  updateBpmnStatus,
 } from '../../../../services'
 import { platformState } from '../../../../store/portfolios'
+import { showDangerToaster } from '../../../../utils/toaster'
+import { xmlParser } from '../../../../utils/xmlParser'
 import styles from '../../styles.module.scss'
 
 export const Window = ({ onClose, window }) => {
@@ -32,6 +38,8 @@ export const Window = ({ onClose, window }) => {
   const [entities, setEntities] = useState([])
   const [sequenceFlows, setSequenceFlows] = useState([])
   const [lanes, setLanes] = useState([])
+  const [autoSave, setAutoSave] = useState(true)
+  const [autoSaveLoading, setAutoSaveLoading] = useState(false)
 
   const onAssociationsClick = useCallback(async () => {
     setIsLoading(true)
@@ -65,12 +73,31 @@ export const Window = ({ onClose, window }) => {
     setIsLoading(false)
   }, [])
 
+  const saveBpmn = useCallback(
+    async fileData => {
+      try {
+        setAutoSaveLoading(true)
+
+        await updateBpmnStatus({
+          id: window.data.id,
+          status: 'changed',
+          fileData,
+        })
+        setAutoSaveLoading(false)
+      } catch (error) {
+        setAutoSaveLoading(false)
+        showDangerToaster(error?.response?.data?.msg ?? error.message)
+      }
+    },
+    [window]
+  )
+
   return (
     <ResizableBox
       className={isMaximize ? styles.windowContainerMax : styles.windowContainer}
       width={500}
       height={400}
-      minConstraints={[300, 200]}
+      minConstraints={[500, 300]}
     >
       <Card
         className={`${styles.windowCard} `}
@@ -95,6 +122,18 @@ export const Window = ({ onClose, window }) => {
           >
             <Button small loading={isLoading} icon='eye-open' text={view} />
           </Popover2>
+          {view === 'BPMN Graph' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Switch
+                checked={autoSave}
+                style={{ marginBottom: 0 }}
+                label='Auto Save'
+                onChange={() => setAutoSave(prevAutoSave => !prevAutoSave)}
+              />
+              {autoSaveLoading && <Spinner size={12} intent={Intent.PRIMARY} />}
+            </div>
+          )}
+
           <ButtonGroup>
             <Tooltip2 content={<span>{isMaximize ? 'minimize' : 'maximize'}</span>}>
               <Button
@@ -114,7 +153,10 @@ export const Window = ({ onClose, window }) => {
             <Bpmn
               xml={bpmn.xml ?? window.data.fileData}
               onChange={data => {
-                setbpmn({ xml: data })
+                setbpmn({ xml: data, changed: !autoSave })
+                if (autoSave) {
+                  saveBpmn(data)
+                }
                 //  const json = converter.xml2json(data, { compact: true, spaces: 2 })
               }}
             />

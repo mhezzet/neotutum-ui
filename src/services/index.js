@@ -1,4 +1,5 @@
 import { xmlFormatter } from '../utils/xmlFormater'
+import { xmlParser } from '../utils/xmlParser'
 import { serviceProvider } from './serviceProvider'
 
 export const getPortfolios = () => serviceProvider('/portfolios')
@@ -24,10 +25,10 @@ export const addNewBpmn = ({
     platformId,
     fileData: file,
     creatorId,
-    bpmnAssociations: [],
-    bpmnSequenceFlows: [],
-    bpmnEntities: [],
-    bpmnLanes: [],
+    bpmnAssociations,
+    bpmnSequenceFlows,
+    bpmnEntities,
+    bpmnLanes,
   })
 
   return serviceProvider('/bpmnFile', {
@@ -44,5 +45,8 @@ export const getBpmnLanes = data => serviceProvider.get('bpmnLanes')
 
 export const archiveBpmn = ({ id }) => serviceProvider.delete(`/bpmnFile/${id}`)
 
-export const updateBpmnStatus = ({ id, status }) =>
-  serviceProvider.put(`/bpmnFile/${id}`, { status: status })
+export const updateBpmnStatus = ({ id, status, fileData }) =>
+  serviceProvider.put(`/bpmnFile/${id}`, {
+    status: status,
+    ...(status === 'changed' && { fileData, ...xmlParser(fileData) }),
+  })

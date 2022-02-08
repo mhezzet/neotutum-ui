@@ -12,3 +12,7 @@ export const showDangerToaster = message => {
 export const showSuccessToaster = message => {
   toaster.show({ message, icon: 'tick', intent: Intent.SUCCESS })
 }
+
+export const showWarningToaster = message => {
+  toaster.show({ message, icon: 'hand', intent: Intent.WARNING })
+}

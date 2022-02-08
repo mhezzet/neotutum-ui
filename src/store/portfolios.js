@@ -20,5 +20,6 @@ export const platformState = atomFamily({
   key: 'platform',
   default: {
     xml: null,
+    changed: false,
   },
 })

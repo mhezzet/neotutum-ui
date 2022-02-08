@@ -24,7 +24,12 @@ import {
 import { platformState, protfoliosState } from '../../../../store/portfolios'
 import { windowsState } from '../../../../store/windows'
 import { generateID } from '../../../../utils/generateID'
-import { showDangerToaster, showSuccessToaster } from '../../../../utils/toaster'
+import {
+  showDangerToaster,
+  showSuccessToaster,
+  showWarningToaster,
+} from '../../../../utils/toaster'
+import { xmlParser } from '../../../../utils/xmlParser'
 
 export const Portfolios = () => {
   const [portfolios, setPortfolios] = useRecoilState(protfoliosState)
@@ -105,6 +110,7 @@ export const Portfolios = () => {
         creatorId: 1,
         fileName,
         platformId: platformPopOver.platformId,
+        // ...xmlParser(bpmnFile), TODO ERROR PARSING
       })
 
       setPortfolios(prevPortfolios => ({
@@ -138,6 +144,7 @@ export const Portfolios = () => {
 
       updatePlatform({ file: bpmnFile, bpmnId: data.data.id })
       addNewWindow({ type: 'bpmn', data: data.data })
+      showSuccessToaster(`New bpmn file uploaded successfully`)
     },
     [addNewWindow, platformPopOver, setPortfolios, updatePlatform]
   )
@@ -417,6 +424,7 @@ export const Portfolios = () => {
 
         updatePlatform({ file: EMPTY_BPMN, bpmnId: data.data.id })
         addNewWindow({ type: 'bpmn', data: data.data })
+        showSuccessToaster(`New bpmn graph added successfully`)
       } catch (error) {
         setElmentToPlatformNameError(error.message)
         showDangerToaster(error.message)
@@ -523,10 +531,28 @@ export const Portfolios = () => {
     [addEmptyBpmn, elmentToPlatformNameError, isAddServiceLoading]
   )
 
+  const getBpmnFile = useRecoilCallback(
+    ({ snapshot }) =>
+      async bpmnId =>
+        snapshot.getPromise(platformState(bpmnId)),
+    []
+  )
+
   const onBpmnStateChange = useCallback(
     async ({ bpmnId, status, platformId, portfolioId, serviceChainId }) => {
       try {
-        await updateBpmnStatus({ id: bpmnId, status })
+        const data = await getBpmnFile(bpmnId)
+
+        if (status === 'changed' && (!data.xml || !data.changed)) {
+          return showWarningToaster('There is no new changes')
+        }
+
+        await updateBpmnStatus({
+          id: bpmnId,
+          status,
+          ...(status === 'changed' && { fileData: data.xml }),
+        })
+
         setPortfolios(prevPortfolios => ({
           ...prevPortfolios,
           data: prevPortfolios.data.map(portfolio =>
@@ -543,9 +569,7 @@ export const Portfolios = () => {
                                 ? {
                                     ...platform,
                                     bpmnFiles: platform.bpmnFiles.map(bpmnFile =>
-                                      bpmnFile.id === bpmnId
-                                        ? { ...bpmnFile, status: 'archive' }
-                                        : bpmnFile
+                                      bpmnFile.id === bpmnId ? { ...bpmnFile, status } : bpmnFile
                                     ),
                                   }
                                 : platform
@@ -562,7 +586,7 @@ export const Portfolios = () => {
         showDangerToaster(error?.response?.data?.msg ?? error.message)
       }
     },
-    [setPortfolios]
+    [getBpmnFile, setPortfolios]
   )
 
   const onBpmnArchive = useCallback(
@@ -842,7 +866,7 @@ export const Portfolios = () => {
                                 setBpmnContextMenu(null)
                                 onBpmnStateChange({
                                   bpmnId: bpmnFile.id,
-                                  status: 'change',
+                                  status: 'changed',
                                   platformId: platform.id,
                                   portfolioId: portfolio.id,
                                   serviceChainId: serviceChain.id,
@@ -858,7 +882,7 @@ export const Portfolios = () => {
                                 setBpmnContextMenu(null)
                                 onBpmnStateChange({
                                   bpmnId: bpmnFile.id,
-                                  status: 'close',
+                                  status: 'closed',
                                   platformId: platform.id,
                                   portfolioId: portfolio.id,
                                   serviceChainId: serviceChain.id,
@@ -908,6 +932,8 @@ export const Portfolios = () => {
     onPlatformMenuClick,
     PlatformPopOverOpenId,
     bpmnContextMenu,
+    onBpmnStateChange,
+    onBpmnArchive,
   ])
 
   const onNodeClick = useCallback(
@@ -1013,10 +1039,10 @@ const mapStatusToIcon = status => {
     case 'commit':
       return 'git-commit'
 
-    case 'change':
+    case 'changed':
       return 'changes'
 
-    case 'close':
+    case 'closed':
       return 'lock'
 
     case 'draft':

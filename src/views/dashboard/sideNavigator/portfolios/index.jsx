@@ -106,7 +106,7 @@ export const Portfolios = () => {
                             platform.id === platformPopOver.platformId
                               ? {
                                   ...platform,
-                                  bpmnFiles: platform
+                                  bpmnFiles: platform.bpmnFiles
                                     ? [data.data, ...platform.bpmnFiles]
                                     : [data.data],
                                 }
@@ -383,7 +383,7 @@ export const Portfolios = () => {
                               platform.id === platformPopOver.platformId
                                 ? {
                                     ...platform,
-                                    bpmnFiles: platform
+                                    bpmnFiles: platform.bpmnFiles
                                       ? [data.data, ...platform.bpmnFiles]
                                       : [data.data],
                                   }

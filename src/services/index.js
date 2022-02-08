@@ -41,3 +41,8 @@ export const getBpmnEntities = data => serviceProvider.get('bpmnEntities')
 export const getBpmnAssociations = data => serviceProvider.get('bpmnEntities')
 export const getBpmnSequenceFlows = data => serviceProvider.get('bpmnSequenceFlows')
 export const getBpmnLanes = data => serviceProvider.get('bpmnLanes')
+
+export const archiveBpmn = ({ id }) => serviceProvider.delete(`/bpmnFile/${id}`)
+
+export const updateBpmnStatus = ({ id, status }) =>
+  serviceProvider.put(`/bpmnFile/${id}`, { status: status })

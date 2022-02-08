@@ -12,14 +12,15 @@
   padding: 10px;
   background-color: #293742;
   color: #e1e8ed;
-  min-width: 230px;
-  overflow-y: scroll;
+  // min-width: 250px;
+  overflow: auto;
+  flex-grow: 1;
 }
 
 .mainContainer {
   display: flex;
   flex-wrap: wrap;
-  flex-grow: 1;
+  flex-grow: 15;
   background-color: #e1e8ed;
   position: relative;
   overflow: auto;

@@ -1,10 +1,26 @@
-import { Button, FormGroup, H5, InputGroup, Intent, Menu, MenuItem, Tree } from '@blueprintjs/core'
-import { Classes, Popover2 } from '@blueprintjs/popover2'
+import {
+  Button,
+  FormGroup,
+  H5,
+  Icon,
+  InputGroup,
+  Intent,
+  Menu,
+  MenuItem,
+  Tree,
+} from '@blueprintjs/core'
+import { Classes, Popover2, Tooltip2 } from '@blueprintjs/popover2'
 import cloneDeep from 'lodash/cloneDeep'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRecoilCallback, useRecoilState, useSetRecoilState } from 'recoil'
 import { EMPTY_BPMN } from '../../../../constants'
-import { addNewBpmn, addNewPlatform, addServiceChain } from '../../../../services'
+import {
+  addNewBpmn,
+  addNewPlatform,
+  addServiceChain,
+  archiveBpmn,
+  updateBpmnStatus,
+} from '../../../../services'
 import { platformState, protfoliosState } from '../../../../store/portfolios'
 import { windowsState } from '../../../../store/windows'
 import { generateID } from '../../../../utils/generateID'
@@ -507,6 +523,90 @@ export const Portfolios = () => {
     [addEmptyBpmn, elmentToPlatformNameError, isAddServiceLoading]
   )
 
+  const onBpmnStateChange = useCallback(
+    async ({ bpmnId, status, platformId, portfolioId, serviceChainId }) => {
+      try {
+        await updateBpmnStatus({ id: bpmnId, status })
+        setPortfolios(prevPortfolios => ({
+          ...prevPortfolios,
+          data: prevPortfolios.data.map(portfolio =>
+            portfolio.id === portfolioId
+              ? {
+                  ...portfolio,
+                  serviceChains:
+                    portfolio?.serviceChains.map(serviceChain =>
+                      serviceChainId === serviceChain.id
+                        ? {
+                            ...serviceChain,
+                            platforms: serviceChain?.platforms.map(platform =>
+                              platform.id === platformId
+                                ? {
+                                    ...platform,
+                                    bpmnFiles: platform.bpmnFiles.map(bpmnFile =>
+                                      bpmnFile.id === bpmnId
+                                        ? { ...bpmnFile, status: 'archive' }
+                                        : bpmnFile
+                                    ),
+                                  }
+                                : platform
+                            ),
+                          }
+                        : serviceChain
+                    ) ?? [],
+                }
+              : portfolio
+          ),
+        }))
+        showSuccessToaster(`${status} successfully`)
+      } catch (error) {
+        showDangerToaster(error?.response?.data?.msg ?? error.message)
+      }
+    },
+    [setPortfolios]
+  )
+
+  const onBpmnArchive = useCallback(
+    async ({ bpmnId, platformId, portfolioId, serviceChainId }) => {
+      try {
+        await archiveBpmn({ id: bpmnId })
+        showSuccessToaster('successfully archived')
+        setPortfolios(prevPortfolios => ({
+          ...prevPortfolios,
+          data: prevPortfolios.data.map(portfolio =>
+            portfolio.id === portfolioId
+              ? {
+                  ...portfolio,
+                  serviceChains:
+                    portfolio?.serviceChains.map(serviceChain =>
+                      serviceChainId === serviceChain.id
+                        ? {
+                            ...serviceChain,
+                            platforms: serviceChain?.platforms.map(platform =>
+                              platform.id === platformId
+                                ? {
+                                    ...platform,
+                                    bpmnFiles: platform.bpmnFiles.map(bpmnFile =>
+                                      bpmnFile.id === bpmnId
+                                        ? { ...bpmnFile, status: 'archive' }
+                                        : bpmnFile
+                                    ),
+                                  }
+                                : platform
+                            ),
+                          }
+                        : serviceChain
+                    ) ?? [],
+                }
+              : portfolio
+          ),
+        }))
+      } catch (error) {
+        showDangerToaster(error?.response?.data?.msg ?? error.message)
+      }
+    },
+    [setPortfolios]
+  )
+
   useEffect(() => {
     setNodes(prevNodes =>
       portfolios.data.map((portfolio, portfolioIdx) => ({
@@ -707,6 +807,11 @@ export const Portfolios = () => {
                     id: bpmnFile?.id ?? Math.random() * 5000,
                     icon: 'document',
                     nodeData: { type: 'bpmn', data: bpmnFile },
+                    secondaryLabel: (
+                      <Tooltip2 content={bpmnFile.status}>
+                        <Icon style={{ marginLeft: 16 }} icon={mapStatusToIcon(bpmnFile.status)} />
+                      </Tooltip2>
+                    ),
                     label: (
                       <Popover2
                         isOpen={bpmnFile?.id === bpmnContextMenu}
@@ -719,7 +824,13 @@ export const Portfolios = () => {
                               text='commit'
                               onClick={() => {
                                 setBpmnContextMenu(null)
-                                console.log('commit')
+                                onBpmnStateChange({
+                                  bpmnId: bpmnFile.id,
+                                  status: 'commit',
+                                  platformId: platform.id,
+                                  portfolioId: portfolio.id,
+                                  serviceChainId: serviceChain.id,
+                                })
                               }}
                             />
                             <MenuItem
@@ -729,7 +840,13 @@ export const Portfolios = () => {
                               text='change'
                               onClick={() => {
                                 setBpmnContextMenu(null)
-                                console.log('change')
+                                onBpmnStateChange({
+                                  bpmnId: bpmnFile.id,
+                                  status: 'change',
+                                  platformId: platform.id,
+                                  portfolioId: portfolio.id,
+                                  serviceChainId: serviceChain.id,
+                                })
                               }}
                             />
                             <MenuItem
@@ -739,7 +856,13 @@ export const Portfolios = () => {
                               text='close'
                               onClick={() => {
                                 setBpmnContextMenu(null)
-                                console.log('close')
+                                onBpmnStateChange({
+                                  bpmnId: bpmnFile.id,
+                                  status: 'close',
+                                  platformId: platform.id,
+                                  portfolioId: portfolio.id,
+                                  serviceChainId: serviceChain.id,
+                                })
                               }}
                             />
                             <MenuItem
@@ -749,7 +872,12 @@ export const Portfolios = () => {
                               text='archive'
                               onClick={() => {
                                 setBpmnContextMenu(null)
-                                console.log('archive')
+                                onBpmnArchive({
+                                  bpmnId: bpmnFile.id,
+                                  platformId: platform.id,
+                                  portfolioId: portfolio.id,
+                                  serviceChainId: serviceChain.id,
+                                })
                               }}
                             />
                           </Menu>
@@ -875,4 +1003,26 @@ const useOnClickOutsideContextMenu = handler => {
       document.removeEventListener('touchstart', listener)
     }
   }, [handler])
+}
+
+const mapStatusToIcon = status => {
+  switch (status) {
+    case 'archive':
+      return 'archive'
+
+    case 'commit':
+      return 'git-commit'
+
+    case 'change':
+      return 'changes'
+
+    case 'close':
+      return 'lock'
+
+    case 'draft':
+      return 'draw'
+
+    default:
+      return 'draw'
+  }
 }

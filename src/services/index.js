@@ -1,4 +1,3 @@
-import { xmlFormatter } from '../utils/xmlFormater'
 import { xmlParser } from '../utils/xmlParser'
 import { serviceProvider } from './serviceProvider'
 

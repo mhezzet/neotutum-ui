@@ -21,7 +21,7 @@ export const xmlParser = content => {
     fullObject.bpmnSequenceFlows.push(arrayFilter(process.children, 'sequenceflow'))
     fullObject.bpmnLanes.push(arrayFilter(process.children, 'lanes'))
     fullObject.bpmnAssociations.push(arrayFilter(process.children, 'associations'))
-    fullObject.bpmnEntities.push(arrayFilter(process.children, 'tasks'))
+    fullObject.bpmnEntities.push(arrayFilter(process.children, 'task'))
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'event'))
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'dataobject'))
     fullObject.bpmnEntities.push(arrayFilter(process.children, 'textannotation'))
